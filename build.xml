@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+
+<project name="architechApp" basedir="." default="make-war">
+
+    <property name="src.dir" value="src"/>
+    <property name="web.dir" value="war"/>
+	<property name="web.dir.webinf" value="${web.dir}/WEB-INF"/>
+    <property name="build.dir" value="${web.dir}/WEB-INF/classes"/>
+    <property name="name" value="architechApp"/>
+	<property name="deploy.path" value="deploy"/>
+	<property name="junit.test.report" value="junitreport"/>
+
+	<target name = "make-war">
+		  <delete includeemptydirs="true" quiet="true">
+		  	<fileset dir="war"/>
+		  </delete>
+		  
+		 <delete includeemptydirs="true" quiet="true">
+		 	<fileset dir="${deploy.path}"/>
+		  </delete>
+		  
+		 <delete includeemptydirs="true" quiet="true">
+			<fileset dir="${junit.test.report}"/>
+		 </delete>
+		
+		  <mkdir dir="${junit.test.report}"/>
+		
+		  <mkdir dir="${deploy.path}"/>
+		  	
+		  <mkdir dir="${web.dir}"/>
+		  <mkdir dir="${web.dir.webinf}"/>
+		  <mkdir dir="${web.dir.webinf}/classes"/>
+		  <mkdir dir="${web.dir.webinf}/lib"/>
+		  <mkdir dir="${web.dir.webinf}/views"/>
+		  	
+	  	 <copy todir="${web.dir.webinf}/views">
+	  	    <fileset dir="views"/>
+	  	 </copy>
+		  
+		 <copy todir="${web.dir.webinf}/classes">
+		 	<fileset dir="schema"/>
+		 </copy>
+		 
+ 		<copy todir="${web.dir.webinf}/lib">
+ 			<fileset dir="lib"/>
+ 		</copy>
+	</target>
+	
+    <path id="master-classpath">
+        <fileset dir="${web.dir}/WEB-INF/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <pathelement path="${build.dir}"/>
+    </path>
+
+
+    <target name="build" depends="make-war" description="Compile main source tree java files">
+        <mkdir dir="${build.dir}"/>
+        <javac destdir="${build.dir}" source="1.7" target="1.7" debug="true"
+               deprecation="false" optimize="false" failonerror="true">
+            <src path="${src.dir}"/>
+            <classpath refid="master-classpath"/>
+        </javac>
+    </target>
+	
+	<!-- Junit -->
+	
+	<path id="junit.class.path"> 
+		<pathelement location="lib/hamcrest-all-1.3.jar" /> 
+		<pathelement location="lib/hamcrest-core-1.3.jar" />
+		<pathelement location="lib/junit-4.12.jar" />  
+		<fileset dir="lib">
+			<include name="**/*.jar" />
+		</fileset>
+		<pathelement location="${build.dir}"/> 
+	</path> 
+	
+	<target name="junit" depends="build"> 
+		<junit printsummary="on" fork="true" haltonfailure="true"> 
+			<classpath refid="junit.class.path" />
+			<formatter type="xml" /> 
+			<batchtest todir="${junit.test.report}"> 
+				<fileset dir="${build.dir}"> 
+					<include name="test/RegistrationControllerTest.class" />
+				</fileset> 
+			</batchtest> 
+		</junit> 
+	</target>
+	
+	<!-- JUNIT test END -->
+
+    <target name="deploy" depends="junit" description="Deploy application">
+        <copy todir="${deploy.path}/${name}" preservelastmodified="true">
+            <fileset dir="${web.dir}">
+                <include name="**/*.*"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="deploywar" depends="junit" description="Deploy application as a WAR file">
+        <war destfile="${name}.war" needxmlfile="false">
+            <fileset dir="${web.dir}">
+                <include name="**/*.*"/>
+            </fileset>
+        </war>
+        <copy todir="${deploy.path}" preservelastmodified="true">
+            <fileset dir=".">
+                <include name="*.war"/>
+            </fileset>
+        </copy>
+    </target>
+    
+
+<!-- End Tomcat tasks -->
+
+</project>
